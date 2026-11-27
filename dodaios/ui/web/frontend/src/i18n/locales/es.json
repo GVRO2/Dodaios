@@ -8628,6 +8628,8 @@
         "auto_tip": "Cuando una suscripción se queda corta o llega a su límite, los agentes en marcha pasan a la suscripción con más presupuesto y siguen trabajando.",
         "model_fallback": "Cambiar de modelo al llegar al límite",
         "model_fallback_tip": "Cuando el modelo de un hilo de código alcanza su límite de uso o de frecuencia, el mismo hilo continúa con el siguiente modelo (Claude Code: Fable 5.2 → Opus 5.5 → Sonnet 5.5).",
+        "account_connectors": "Conectores de la cuenta Claude en los hilos",
+        "account_connectors_tip": "Desactivado: los nuevos hilos de Claude arrancan sin los conectores de tu cuenta Claude. Cada mensaje lleva menos contexto y esas herramientas no están disponibles en el hilo. Los servidores de este equipo y las herramientas de Dodaios se mantienen.",
         "threshold": "Cuándo cambiar",
         "at_left": "con un {left} % restante",
         "at_limit": "solo al llegar al límite",

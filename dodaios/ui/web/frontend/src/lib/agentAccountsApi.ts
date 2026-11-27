@@ -390,3 +390,23 @@ export function updateModelFallback(enabled: boolean): Promise<ModelFallbackStat
     body: JSON.stringify({ enabled }),
   });
 }
+
+/**
+ * Whether Claude Code coding threads load the connectors of the Claude account.
+ * Each one adds to the context of every message.
+ */
+export async function fetchAccountConnectors(): Promise<{ enabled: boolean } | null> {
+  const res = await fetch("/api/agent-chat/account-connectors", { cache: "no-store" });
+  // An older backend has no such route: the bar then has no such switch.
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await detail(res));
+  return (await res.json()) as { enabled: boolean };
+}
+
+export function updateAccountConnectors(enabled: boolean): Promise<{ enabled: boolean }> {
+  return send<{ enabled: boolean }>("/api/agent-chat/account-connectors", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+  });
+}

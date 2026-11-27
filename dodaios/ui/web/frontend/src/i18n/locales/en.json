@@ -8628,6 +8628,8 @@
         "auto_tip": "When a subscription runs low or hits its limit, running agents move to the subscription with the most budget left and keep working.",
         "model_fallback": "Switch models at a limit",
         "model_fallback_tip": "When a coding thread's model hits its usage or rate limit, the same thread continues on the next model (Claude Code: Fable 5.2 → Opus 5.5 → Sonnet 5.5).",
+        "account_connectors": "Claude account connectors in threads",
+        "account_connectors_tip": "Off: new Claude threads start without the connectors added to your Claude account. Every message carries less context, and those tools are not available in the thread. Servers set up on this computer and Dodaios' own tools stay.",
         "threshold": "When to switch",
         "at_left": "at {left}% left",
         "at_limit": "only at the limit",

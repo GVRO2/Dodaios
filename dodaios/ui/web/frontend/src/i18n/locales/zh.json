@@ -8628,6 +8628,8 @@
         "auto_tip": "当某个订阅额度将尽或达到上限时，正在运行的智能体会迁移到剩余额度最多的订阅并继续工作。",
         "model_fallback": "达到上限时切换模型",
         "model_fallback_tip": "编程线程的模型达到用量或速率上限时，同一线程会改用下一个模型继续（Claude Code：Fable 5.2 → Opus 5.5 → Sonnet 5.5）。",
+        "account_connectors": "线程使用 Claude 账户的连接器",
+        "account_connectors_tip": "关闭后，新的 Claude 线程启动时不加载你 Claude 账户中的连接器。每条消息携带的上下文更少，线程中也无法使用这些工具。本机配置的服务器和 Dodaios 自带的工具保持不变。",
         "threshold": "切换时机",
         "at_left": "剩余 {left}% 时",
         "at_limit": "仅在达到上限时",

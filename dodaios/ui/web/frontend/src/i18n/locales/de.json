@@ -8628,6 +8628,8 @@
         "auto_tip": "Wenn ein Abo knapp wird oder sein Limit erreicht, ziehen laufende Agents auf das Abo mit dem meisten Restbudget um und arbeiten weiter.",
         "model_fallback": "Modell wechseln bei Limit",
         "model_fallback_tip": "Erreicht das Modell eines Coding-Threads sein Nutzungs- oder Ratenlimit, arbeitet derselbe Thread mit dem nächsten Modell weiter (Claude Code: Fable 5.2 → Opus 5.5 → Sonnet 5.5).",
+        "account_connectors": "Konnektoren des Claude-Kontos in Threads",
+        "account_connectors_tip": "Aus: Neue Claude-Threads starten ohne die Konnektoren deines Claude-Kontos. Jede Nachricht trägt weniger Kontext, und diese Werkzeuge fehlen im Thread. Server auf diesem Computer und die Werkzeuge von Dodaios bleiben.",
         "threshold": "Wann wechseln",
         "at_left": "bei {left} % Rest",
         "at_limit": "erst am Limit",

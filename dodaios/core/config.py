@@ -29,6 +29,7 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 from .ack_brain_config import AckBrainConfig
 from .branding import KEYRING_SERVICE_NAME, LEGACY_KEYRING_SERVICE_NAMES
+from .coding_thread_config import CodingThreadConfig
 from .env_prefix import accepted_names
 from .identity_boot import resolve_config_file
 from .instance import current_instance, data_dir_source, resolve_data_dir
@@ -2652,7 +2653,7 @@ class GlmCodingPlanConfig(BaseModel):
     )
 
 
-class AgenticIdeConfig(BaseModel):
+class AgenticIdeConfig(CodingThreadConfig):
     """Agentic IDE behaviour that is not per-workspace state."""
 
     # AP-16: a key written by a NEWER install must not fail this one's boot.
@@ -2702,40 +2703,6 @@ class AgenticIdeConfig(BaseModel):
             "what was already collected."
         ),
     )
-
-    model_fallback: bool = Field(
-        default=True,
-        description=(
-            "When a coding thread's model hits its usage or rate limit, switch that "
-            "same thread to the next model of its CLI's fallback chain and continue "
-            "the conversation (a notice in the thread says so). Off leaves the thread "
-            "stopped with the limit error, as before."
-        ),
-    )
-
-    model_fallback_chains: dict[str, list[str]] = Field(
-        default_factory=dict,
-        description=(
-            "Per-CLI fallback chains, most preferred model first, keyed by runner "
-            "('claude-cli', 'codex-cli', ...). A CLI not listed uses the built-in "
-            "chain (Claude Code: Fable 5.2, Opus 5.5, Sonnet 5.5); an empty list "
-            "switches fallback off for that CLI."
-        ),
-    )
-
-    @field_validator("model_fallback_chains", mode="before")
-    @classmethod
-    def _usable_chains(cls, value: object) -> dict[str, list[str]]:
-        """Anything that is not a table of model lists becomes "no override"."""
-        if not isinstance(value, dict):
-            return {}
-        out: dict[str, list[str]] = {}
-        for runner, models in value.items():
-            if isinstance(models, str):
-                models = models.split(",")
-            if isinstance(models, list | tuple):
-                out[str(runner)] = [str(m).strip() for m in models if str(m).strip()]
-        return out
 
     @field_validator("prompt_writer", mode="before")
     @classmethod

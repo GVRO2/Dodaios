@@ -4,13 +4,14 @@ import { Loader2 } from "lucide-react";
 import { fill, useT } from "@/i18n";
 import { useRunLocale } from "@/components/runs/format";
 import {
+  fetchAccountConnectors,
   fetchAutoSwitch,
   fetchModelFallback,
   switchSeat,
+  updateAccountConnectors,
   updateAutoSwitch,
   updateModelFallback,
   type AutoSwitchState,
-  type ModelFallbackState,
   type SeatSwitchEvent,
 } from "@/lib/agentAccountsApi";
 import { cn } from "@/lib/utils";
@@ -204,7 +205,20 @@ export function AutoSwitchBar() {
           className="h-7 w-auto shrink-0 text-[11px]"
         />
       </div>
-      <ModelFallbackToggle />
+      <BackendSwitch
+        id="model-fallback-toggle"
+        label={t("ide_side_panel.subscriptions.switch.model_fallback")}
+        tip={t("ide_side_panel.subscriptions.switch.model_fallback_tip")}
+        read={fetchModelFallback}
+        write={updateModelFallback}
+      />
+      <BackendSwitch
+        id="account-connectors-toggle"
+        label={t("ide_side_panel.subscriptions.switch.account_connectors")}
+        tip={t("ide_side_panel.subscriptions.switch.account_connectors_tip")}
+        read={fetchAccountConnectors}
+        write={updateAccountConnectors}
+      />
       {seat.notice && (
         <p
           data-testid="seat-switch-notice"
@@ -224,26 +238,37 @@ export function AutoSwitchBar() {
 }
 
 /**
- * Whether a coding thread whose model hits its usage or rate limit goes on
- * on the next model of its CLI's chain, in the same thread. Read once when
- * the bar mounts; absent on a backend without the feature.
+ * One on/off setting of coding threads that the backend keeps. Read once when
+ * the bar mounts; absent on a backend without it.
  */
-function ModelFallbackToggle() {
+function BackendSwitch({
+  id,
+  label,
+  tip,
+  read,
+  write,
+}: {
+  id: string;
+  label: string;
+  tip: string;
+  read: () => Promise<{ enabled: boolean } | null>;
+  write: (enabled: boolean) => Promise<{ enabled: boolean }>;
+}) {
   const t = useT();
-  const [state, setState] = useState<ModelFallbackState | null>(null);
+  const [state, setState] = useState<{ enabled: boolean } | null>(null);
   const [failed, setFailed] = useState("");
   useEffect(() => {
     let alive = true;
-    fetchModelFallback()
+    read()
       .then((next) => { if (alive) setState(next); })
-      .catch(() => { /* no line: the bar keeps its subscription switch */ });
+      .catch(() => { /* no line: the bar keeps its other switches */ });
     return () => { alive = false; };
-  }, []);
+  }, [read]);
   if (!state) return null;
   const toggle = async (enabled: boolean) => {
     setFailed("");
     try {
-      setState(await updateModelFallback(enabled));
+      setState(await write(enabled));
     } catch (err) {
       setFailed(fill(t("ide_side_panel.subscriptions.switch.failed"), { error: (err as Error).message }));
     }
@@ -252,15 +277,15 @@ function ModelFallbackToggle() {
     <>
       <div className="flex min-h-7 items-center gap-2">
         <Switch
-          id="model-fallback-toggle"
-          data-testid="model-fallback-toggle"
+          id={id}
+          data-testid={id}
           checked={state.enabled}
           onCheckedChange={(enabled) => void toggle(enabled)}
-          aria-label={t("ide_side_panel.subscriptions.switch.model_fallback")}
+          aria-label={label}
         />
-        <QuickTooltip content={t("ide_side_panel.subscriptions.switch.model_fallback_tip")} side="bottom" className="min-w-0 flex-1">
-          <label htmlFor="model-fallback-toggle" className="block cursor-pointer truncate text-[11.5px] text-foreground">
-            {t("ide_side_panel.subscriptions.switch.model_fallback")}
+        <QuickTooltip content={tip} side="bottom" className="min-w-0 flex-1">
+          <label htmlFor={id} className="block cursor-pointer truncate text-[11.5px] text-foreground">
+            {label}
           </label>
         </QuickTooltip>
       </div>

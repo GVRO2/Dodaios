@@ -8628,6 +8628,8 @@
         "auto_tip": "Quando uma subscrição está a acabar ou atinge o limite, os agentes em execução passam para a subscrição com mais orçamento restante e continuam a trabalhar.",
         "model_fallback": "Mudar de modelo no limite",
         "model_fallback_tip": "Quando o modelo de um tópico de código atinge o limite de utilização ou de frequência, o mesmo tópico continua com o modelo seguinte (Claude Code: Fable 5.2 → Opus 5.5 → Sonnet 5.5).",
+        "account_connectors": "Conectores da conta Claude nos tópicos",
+        "account_connectors_tip": "Desligado: os novos tópicos do Claude arrancam sem os conectores da sua conta Claude. Cada mensagem leva menos contexto e essas ferramentas deixam de estar disponíveis no tópico. Os servidores deste computador e as ferramentas do Dodaios mantêm-se.",
         "threshold": "Quando mudar",
         "at_left": "com {left}% restante",
         "at_limit": "só no limite",

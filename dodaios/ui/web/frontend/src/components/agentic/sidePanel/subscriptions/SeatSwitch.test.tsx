@@ -2,10 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import {
   fetchAgentAccounts,
+  fetchAccountConnectors,
   fetchAgentUsage,
   fetchAutoSwitch,
   fetchModelFallback,
   switchSeat,
+  updateAccountConnectors,
   updateAutoSwitch,
   updateModelFallback,
   type AgentAccount,
@@ -22,6 +24,8 @@ vi.mock("@/lib/agentAccountsApi", async () => {
     fetchAgentUsage: vi.fn(),
     fetchAutoSwitch: vi.fn(),
     fetchModelFallback: vi.fn(),
+    fetchAccountConnectors: vi.fn(),
+    updateAccountConnectors: vi.fn(),
     switchSeat: vi.fn(),
     updateAutoSwitch: vi.fn(),
     updateModelFallback: vi.fn(),
@@ -80,6 +84,7 @@ beforeEach(() => {
   vi.mocked(fetchAgentUsage).mockResolvedValue({ accounts: [], ttl_seconds: 60, generated_at: 0 });
   vi.mocked(fetchAutoSwitch).mockResolvedValue(STATE);
   vi.mocked(fetchModelFallback).mockResolvedValue({ enabled: true, chains: { "claude-cli": ["claude-fable-5-2", "claude-opus-5-5"] } });
+  vi.mocked(fetchAccountConnectors).mockResolvedValue({ enabled: true });
 });
 
 afterEach(() => {
@@ -155,6 +160,16 @@ describe("seat switching in the Subscriptions tab", () => {
     fireEvent.click(toggle);
     await waitFor(() => expect(updateModelFallback).toHaveBeenCalledWith(false));
     await waitFor(() => expect(screen.getByTestId("model-fallback-toggle").getAttribute("aria-checked")).toBe("false"));
+  });
+
+  it("starts coding threads without the account connectors when switched off", async () => {
+    vi.mocked(updateAccountConnectors).mockResolvedValue({ enabled: false });
+    await rows();
+    const toggle = await screen.findByTestId("account-connectors-toggle");
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(updateAccountConnectors).toHaveBeenCalledWith(false));
+    await waitFor(() => expect(screen.getByTestId("account-connectors-toggle").getAttribute("aria-checked")).toBe("false"));
   });
 
   it("draws no switching UI on a backend without the feature", async () => {

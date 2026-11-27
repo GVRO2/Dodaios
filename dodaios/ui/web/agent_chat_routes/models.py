@@ -296,5 +296,9 @@ class PreloadBody(BaseModel):
     model: str = Field(default="", max_length=256)
 
 
+class SwitchBody(BaseModel):
+    enabled: bool
+
+
 class QueuedEditBody(BaseModel):
     text: str = Field(max_length=200_000)

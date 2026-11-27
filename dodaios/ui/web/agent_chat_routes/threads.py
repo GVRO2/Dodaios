@@ -35,9 +35,30 @@ from dodaios.ui.web.agent_chat_routes.models import (
     FromTerminalBody,
     MessageBody,
     PatchSessionBody,
+    SwitchBody,
 )
 
 router = APIRouter()
+
+
+@router.get("/account-connectors", summary="Whether coding threads get the account connectors")
+async def get_account_connectors() -> dict[str, bool]:
+    """Whether Claude Code coding threads load the connectors of the Claude account."""
+    from dodaios.agent_chat import account_connectors
+
+    return {"enabled": await asyncio.to_thread(account_connectors.enabled)}
+
+
+@router.put("/account-connectors", summary="Give coding threads the account connectors, or not")
+async def set_account_connectors(body: SwitchBody) -> dict[str, bool]:
+    """Saved in ``[agentic_ide] thread_account_connectors``; new conversations follow it."""
+    from dodaios.agent_chat import account_connectors
+    from dodaios.core import config_writer
+
+    await asyncio.to_thread(
+        config_writer.set_agentic_ide_flag, account_connectors.CONFIG_KEY, body.enabled
+    )
+    return {"enabled": await asyncio.to_thread(account_connectors.enabled)}
 
 
 @router.post("/sessions/from-terminal", status_code=201)

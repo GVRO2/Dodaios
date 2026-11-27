@@ -116,6 +116,9 @@ news since it was last opened.
   A thread keeps at most one conversation of each agent: going back to one it
   used resumes it, told only what happened since its last answer. A new thread
   starts new ones, and so do a cleared thread and a changed folder or computer.
+  Claude threads load the connectors of the signed-in Claude account, which adds
+  context to every message; the switch for them is on the Subscriptions tab
+  (`[agentic_ide] thread_account_connectors`).
   While a turn runs, and in a team member's thread, the agent stays. A new
   thread starts on the
   agent, model, effort and access the person picked last (else the newest

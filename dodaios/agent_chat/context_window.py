@@ -295,6 +295,7 @@ async def probe_breakdown(
     byte the same, and no model is called. The answer is kept while the
     session file is unchanged, so hovering the ring twice runs it once.
     """
+    from dodaios.agent_chat import account_connectors
     from dodaios.agent_chat.runner_cli import CliUnavailable, claude_argv_prefix
     from dodaios.agent_chat.thread_sessions import split_fork
 
@@ -334,7 +335,8 @@ async def probe_breakdown(
         proc = await asyncio.create_subprocess_exec(
             *argv,
             cwd=str(folder),
-            env=_probe_env(account),
+            # What a thread's turn is given, so the numbers match it.
+            env=account_connectors.apply(_probe_env(account)),
             stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,

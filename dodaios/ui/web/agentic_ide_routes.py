@@ -3837,7 +3837,7 @@ async def set_model_fallback(req: ModelFallbackRequest) -> dict:
     """Saved in ``[agentic_ide] model_fallback``; the next limited turn reads it."""
     from dodaios.core import config_writer
 
-    await asyncio.to_thread(config_writer.set_agentic_ide_model_fallback, req.enabled)
+    await asyncio.to_thread(config_writer.set_agentic_ide_flag, "model_fallback", req.enabled)
     return await asyncio.to_thread(_model_fallback_status)
 
 

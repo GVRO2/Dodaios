@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Final
 
-from dodaios.agent_chat import dodaios_harness
+from dodaios.agent_chat import account_connectors, dodaios_harness
 from dodaios.agent_chat import runner_cli as _rc
 from dodaios.agent_chat.permissions import (
     ladder_key,
@@ -504,6 +504,9 @@ def plan_claude(
     resume: str | None,
     identity: dodaios_harness.Identity | None = None,
 ) -> CliPlan:
+    env = dodaios_harness.apply_env(_rc._account_env("claude"))
+    if identity is None:  # a coding thread
+        env = account_connectors.apply(env)
     return _plan_claude_code(
         prompt=prompt,
         cwd=cwd,
@@ -512,7 +515,7 @@ def plan_claude(
         permission_mode=permission_mode,
         resume=resume,
         identity=identity,
-        env=dodaios_harness.apply_env(_rc._account_env("claude")),
+        env=env,
         thinking_summaries=True,
         tool_summaries=True,
     )

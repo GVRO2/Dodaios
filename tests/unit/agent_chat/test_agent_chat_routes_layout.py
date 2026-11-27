@@ -54,6 +54,8 @@ EXPECTED_HTTP: list[tuple[str, str]] = [
     ("POST", "/api/agent-chat/lead/prepared/{item_id}/{outcome}"),
     ("POST", "/api/agent-chat/lead/triggers/events"),
     ("POST", "/api/agent-chat/lead/fresh-start"),
+    ("GET", "/api/agent-chat/account-connectors"),
+    ("PUT", "/api/agent-chat/account-connectors"),
     ("POST", "/api/agent-chat/sessions/from-terminal"),
     ("POST", "/api/agent-chat/sessions/{session_id}/fork"),
     ("GET", "/api/agent-chat/sessions/{session_id}"),

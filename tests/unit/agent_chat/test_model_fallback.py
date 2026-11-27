@@ -209,7 +209,7 @@ def test_the_switch_is_written_to_the_config_file(tmp_path: Any) -> None:
 
     path = tmp_path / "dodaios.toml"
     path.write_text("[agentic_ide]\nfollow_main = true\n", encoding="utf-8")
-    config_writer.set_agentic_ide_model_fallback(False, path=path)
+    config_writer.set_agentic_ide_flag("model_fallback", False, path=path)
     data = tomllib.loads(path.read_text(encoding="utf-8"))
     assert data["agentic_ide"] == {"follow_main": True, "model_fallback": False}
 
