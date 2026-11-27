@@ -37,6 +37,7 @@ _RESUME_LOST_MARKERS: Final[tuple[str, ...]] = (
     "no conversation found",
     "session not found",
     "no session found",
+    "no rollout found",
     "could not find session",
     "unknown session",
     "not found: ",
@@ -599,6 +600,7 @@ async def run_cli_turn(
             resume=resume,
             with_file=(runner in _CLAUDE_CODE_RUNNERS),
             prompt_override=prompt_override,
+            provider=str(getattr(session, "provider", "")),
         )
         if bridge is not None:
             from dodaios.agent_chat.approval_bridge import ChatGrant

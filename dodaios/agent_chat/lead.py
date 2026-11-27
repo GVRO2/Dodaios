@@ -195,7 +195,11 @@ def adopt_seat(svc: Any, seat: dict[str, Any]) -> Any | None:
     if "provider" in fields:
         if svc.is_running(session.session_id):
             raise SeatBusy(SEAT_BUSY)
-        fields["vendor_session"] = ""
+        # The provider's own conversation from before, if it had one here.
+        held, account = svc.store.switch_conversation(session.session_id, fields["provider"])
+        fields["vendor_session"] = held
+        if held and not seat.get("account_id"):
+            fields["account_id"] = account
     if not fields:
         return session
     updated = svc.store.update_session(session.session_id, **fields)
@@ -519,6 +523,7 @@ def fresh_start(svc: Any) -> int | None:
         # A CLI seat resumes its own vendor conversation: forget it, or the next
         # turn would carry the full old context and "fresh" would be a no-op.
         svc.store.update_session(session.session_id, vendor_session="")
+    svc.store.forget_conversations(session.session_id)
     return through
 
 

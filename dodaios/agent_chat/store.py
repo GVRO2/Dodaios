@@ -155,6 +155,15 @@ CREATE TABLE IF NOT EXISTS agent_chat_side_threads (
 );
 CREATE INDEX IF NOT EXISTS idx_agent_chat_side_threads_parent
     ON agent_chat_side_threads(parent_session, status);
+-- The CLI conversation a provider had in a chat that moved to another one
+-- (``switch_conversation``), taken up again when the chat comes back.
+CREATE TABLE IF NOT EXISTS agent_chat_provider_conversations (
+    session_id      TEXT NOT NULL,
+    provider        TEXT NOT NULL,
+    vendor_session  TEXT NOT NULL,
+    account_id      TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (session_id, provider)
+);
 """
 
 _VOICE_DEDUP_KEEP_MS: Final[int] = 30 * 24 * 3600 * 1000
@@ -793,6 +802,52 @@ class AgentChatStore:
             )
             self._conn.commit()
 
+    def switch_conversation(self, session_id: str, provider: str) -> tuple[str, str]:
+        """Set aside the CLI conversation the chat holds and take up ``provider``'s.
+
+        Call before the session's row moves to ``provider``. Returns the
+        ``(vendor_session, account_id)`` to store with it, both empty when that
+        provider has no conversation here. A fork that never ran is not kept.
+        """
+        with self._lock:
+            now = self._conn.execute(
+                "SELECT provider, vendor_session, account_id FROM agent_chat_sessions "
+                "WHERE session_id = ?",
+                (session_id,),
+            ).fetchone()
+            if now is None:
+                return "", ""
+            held = str(now["vendor_session"] or "")
+            if held and not held.startswith("fork:"):
+                self._conn.execute(
+                    "INSERT OR REPLACE INTO agent_chat_provider_conversations "
+                    "(session_id, provider, vendor_session, account_id) VALUES (?, ?, ?, ?)",
+                    (session_id, now["provider"], held, now["account_id"] or ""),
+                )
+            there = self._conn.execute(
+                "SELECT vendor_session, account_id FROM agent_chat_provider_conversations "
+                "WHERE session_id = ? AND provider = ?",
+                (session_id, provider),
+            ).fetchone()
+            self._conn.execute(
+                "DELETE FROM agent_chat_provider_conversations "
+                "WHERE session_id = ? AND provider = ?",
+                (session_id, provider),
+            )
+            self._conn.commit()
+        if there is None:
+            return "", ""
+        return str(there["vendor_session"]), str(there["account_id"])
+
+    def forget_conversations(self, session_id: str) -> None:
+        """Drop the set-aside conversations: the chat starts over or moves elsewhere."""
+        with self._lock:
+            self._conn.execute(
+                "DELETE FROM agent_chat_provider_conversations WHERE session_id = ?",
+                (session_id,),
+            )
+            self._conn.commit()
+
     def delete_session(self, session_id: str) -> bool:
         with self._lock:
             cur = self._conn.execute(
@@ -810,6 +865,7 @@ class AgentChatStore:
                 "agent_chat_parked_work",
                 "agent_chat_queued_messages",
                 "agent_chat_side_threads",
+                "agent_chat_provider_conversations",
             ):
                 self._conn.execute(
                     f"DELETE FROM {table} WHERE session_id = ?",  # noqa: S608 - fixed names
@@ -965,6 +1021,10 @@ class AgentChatStore:
                     "preview = '', updated_ms = ?, "
                     "title = CASE WHEN ? THEN '' ELSE title END WHERE session_id = ?",
                     (seq, ts_ms, int(from_message), session_id),
+                )
+                self._conn.execute(
+                    "DELETE FROM agent_chat_provider_conversations WHERE session_id = ?",
+                    (session_id,),
                 )
             else:
                 self._conn.execute(

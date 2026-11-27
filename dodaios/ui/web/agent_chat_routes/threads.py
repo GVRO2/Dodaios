@@ -234,6 +234,28 @@ async def _leave_provider(svc: Any, session_id: str) -> None:
         raise HTTPException(status_code=409, detail=SEAT_BUSY)
 
 
+#: The chats whose agents take up their own conversation again after a switch.
+#: A society seat is re-bound by its roster and starts from its briefing.
+_RESUMING_SURFACES = ("agent", "jarvis")
+
+
+def _carry_conversations(svc: Any, before: Any, fields: dict[str, Any]) -> None:
+    """Settle which CLI conversation the patched session holds.
+
+    A move to another provider takes up the one it had there; a new folder or
+    computer leaves them all behind.
+    """
+    if fields.get("cwd", before.cwd) != before.cwd or "computer_id" in fields:
+        svc.store.forget_conversations(before.session_id)
+    elif (
+        fields.get("provider", before.provider) != before.provider
+        and before.surface in _RESUMING_SURFACES
+    ):
+        fields["vendor_session"], fields["account_id"] = svc.store.switch_conversation(
+            before.session_id, fields["provider"]
+        )
+
+
 @router.patch("/sessions/{session_id}")
 async def patch_session(
     session_id: str, body: PatchSessionBody, request: Request
@@ -353,6 +375,7 @@ async def patch_session(
         await _leave_provider(svc, session_id)
     if current.surface == "society" and svc.is_running(session_id):
         raise HTTPException(status_code=409, detail="Agent chat is working")
+    _carry_conversations(svc, current, fields)
     session = svc.store.update_session(session_id, **fields)
     assert session is not None
     if session.surface == "jarvis" and {"provider", "model", "effort"}.intersection(fields):

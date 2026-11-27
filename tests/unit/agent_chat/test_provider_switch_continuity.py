@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 import uuid
@@ -26,12 +27,14 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from dodaios.agent_chat import dodaios_harness, runner_cli
+from dodaios.agent_chat.runner_cli.turn import _resume_was_lost
 from dodaios.agent_chat.service import AgentChatService
 from dodaios.agent_chat.store import AgentChatStore
 from dodaios.ui.web.agent_chat_routes import router
 
 FIRST = "CANARY-FIRST-7Q2X"
 SECOND = "CANARY-SECOND-9K4M"
+THIRD = "CANARY-THIRD-3H8P"
 SEAT_A, SEAT_B = "claude-api", "openai-codex"
 
 
@@ -65,6 +68,10 @@ def _wire(runner: str, conversation: str) -> list[dict[str, Any]]:
     ]
 
 
+def _failure(text: str) -> dict[str, Any]:
+    return {"type": "result", "subtype": "error_during_execution", "is_error": True, "result": text}
+
+
 class _Chat:
     """One chat behind the real routes, and what each CLI turn was handed."""
 
@@ -75,6 +82,9 @@ class _Chat:
         self.turns: list[dict[str, Any]] = []
         #: While set to a path, a CLI stays running until that file exists.
         self.hold: Path | None = None
+        #: Conversation ids the CLI no longer knows, and a switch to fail turns.
+        self.lost: set[str] = set()
+        self.fail = False
 
     @property
     def service(self) -> AgentChatService:
@@ -141,6 +151,10 @@ def chat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             )
             script = "import pathlib, sys, time\nsys.stdin.read()\n"
             lines = _wire(runner, conversation)
+            if resume in harness.lost:
+                lines = [_failure(f"No conversation found with session ID: {resume}")]
+            elif harness.fail:
+                lines = [lines[0], _failure("The model call failed.")]
             script += f"print({json.dumps(lines[0])!r}, flush=True)\n"
             if harness.hold is not None:
                 script += (
@@ -179,8 +193,149 @@ def test_a_switch_hands_the_conversation_to_the_new_provider_and_back(chat: _Cha
     assert chat.patch(sid, provider=SEAT_A, model="") == 200
     turn = chat.say(sid, "Both codes, please.")
     assert turn["runner"] == "claude-cli"
-    assert FIRST in turn["given"]
     assert SECOND in turn["given"]
+
+
+@pytest.mark.parametrize("surface", ["agent", "jarvis"])
+def test_the_replay_names_the_agent_each_message_was_sent_to(chat: _Chat, surface: str):
+    sid = chat.open(surface)
+    chat.say(sid, f"Keep this code: {FIRST}")
+    assert chat.patch(sid, provider=SEAT_B, model="") == 200
+
+    given = chat.say(sid, f"And a second one: {SECOND}")["given"]
+    assert re.search(rf"Person: \[to claude-cli[^\]]*\] Keep this code: {FIRST}", given)
+
+    assert chat.patch(sid, provider=SEAT_A, model="") == 200
+    given = chat.say(sid, "Which code did I give the other agent?")["given"]
+    assert re.search(rf"Person: \[to codex-cli[^\]]*\] And a second one: {SECOND}", given)
+
+
+@pytest.mark.parametrize("surface", ["agent", "jarvis"])
+def test_going_back_to_a_provider_resumes_the_conversation_it_had(chat: _Chat, surface: str):
+    sid = chat.open(surface)
+    chat.say(sid, f"Keep this code: {FIRST}")
+    first_a = chat.vendor(sid)
+    assert chat.patch(sid, provider=SEAT_B, model="") == 200
+    chat.say(sid, f"And a second one: {SECOND}")
+    first_b = chat.vendor(sid)
+
+    assert chat.patch(sid, provider=SEAT_A, model="") == 200
+    turn = chat.say(sid, f"A third one: {THIRD}")
+    assert turn["resume"] == first_a
+    # It is told only what it missed.
+    assert SECOND in turn["given"]
+    assert FIRST not in turn["given"]
+
+    assert chat.patch(sid, provider=SEAT_B, model="") == 200
+    turn = chat.say(sid, "All of them, please.")
+    assert turn["resume"] == first_b
+    assert THIRD in turn["given"]
+    assert SECOND not in turn["given"]
+
+    # Nothing new happened elsewhere, so the next message goes alone.
+    turn = chat.say(sid, "Go on.")
+    assert turn["resume"] == first_b
+    assert THIRD not in turn["given"]
+
+
+def test_each_chat_has_one_conversation_per_agent_and_shares_none(chat: _Chat):
+    first, second = chat.open("agent"), chat.open("agent")
+    held: dict[str, set[str]] = {}
+    for sid in (first, second):
+        for provider in (SEAT_A, SEAT_B, SEAT_A, SEAT_B, SEAT_A):
+            assert chat.patch(sid, provider=provider, model="") == 200
+            chat.say(sid, "Go on.")
+            held.setdefault(f"{sid} {provider}", set()).add(chat.vendor(sid))
+
+    assert [len(ids) for ids in held.values()] == [1, 1, 1, 1]
+    assert len(set().union(*held.values())) == 4
+
+
+@pytest.mark.parametrize("surface", ["agent", "jarvis"])
+def test_going_back_without_a_turn_elsewhere_adds_nothing(chat: _Chat, surface: str):
+    sid = chat.open(surface)
+    chat.say(sid, f"Keep this code: {FIRST}")
+    held = chat.vendor(sid)
+    assert chat.patch(sid, provider=SEAT_B, model="") == 200
+    assert chat.patch(sid, provider=SEAT_A, model="") == 200
+
+    turn = chat.say(sid, "Go on.")
+
+    assert turn["resume"] == held
+    assert FIRST not in turn["given"]
+
+
+def test_a_slash_command_or_a_failed_turn_on_return_does_not_lose_what_was_missed(chat: _Chat):
+    sid = chat.open("agent")
+    chat.say(sid, "Hello.")
+    assert chat.patch(sid, provider=SEAT_B, model="") == 200
+    chat.say(sid, f"Keep this code: {SECOND}")
+    assert chat.patch(sid, provider=SEAT_A, model="") == 200
+
+    assert chat.say(sid, "/review")["message"].startswith("/review")
+    chat.fail = True
+    chat.say(sid, "This one fails.")
+    chat.fail = False
+
+    assert SECOND in chat.say(sid, "Which code?")["given"]
+    assert SECOND not in chat.say(sid, "Again?")["given"]
+
+
+def test_a_conversation_the_cli_lost_starts_over_with_the_history(chat: _Chat):
+    sid = chat.open("agent")
+    chat.say(sid, f"Keep this code: {FIRST}")
+    held = chat.vendor(sid)
+    assert chat.patch(sid, provider=SEAT_B, model="") == 200
+    assert chat.patch(sid, provider=SEAT_A, model="") == 200
+    chat.lost.add(held)
+
+    turn = chat.say(sid, "Which code?")
+
+    assert turn["resume"] is None
+    assert FIRST in turn["given"]
+
+
+@pytest.mark.parametrize(
+    "said",
+    [
+        "No conversation found with session ID: 00000000-0000-4000-8000-000000000000",
+        "Error: thread/resume: thread/resume failed: no rollout found for thread id "
+        "00000000-0000-4000-8000-000000000000 (code -32600)",
+    ],
+)
+def test_what_each_cli_says_about_a_conversation_it_no_longer_has_is_understood(said: str):
+    assert _resume_was_lost(said)
+
+
+@pytest.mark.parametrize("change", ["folder", "clear"])
+def test_a_new_folder_or_a_cleared_thread_forgets_the_set_aside_conversations(
+    chat: _Chat, change: str
+):
+    sid = chat.open("agent")
+    chat.say(sid, "Hello.")
+    assert chat.patch(sid, provider=SEAT_B, model="") == 200
+    if change == "folder":
+        other = chat.tmp_path / "other"
+        other.mkdir()
+        assert chat.patch(sid, cwd=str(other)) == 200
+    else:
+        chat.service.store.append_event(sid, {"kind": "conversation_cleared", "payload": {}})
+    assert chat.patch(sid, provider=SEAT_A, model="") == 200
+
+    assert chat.say(sid, "Hello again.")["resume"] is None
+
+
+def test_a_new_chat_pick_resumes_the_conversation_the_provider_had(chat: _Chat):
+    sid = chat.open("jarvis")
+    chat.service.store.set_lead_session_id(sid)
+    chat.say(sid, "Hello.")
+    held = chat.vendor(sid)
+
+    for provider in (SEAT_B, SEAT_A):
+        picked = {"surface": "jarvis", "provider": provider}
+        assert chat.client.post("/api/agent-chat/sessions", json=picked).status_code < 300
+
+    assert chat.say(sid, "Go on.")["resume"] == held
 
 
 @pytest.mark.parametrize("surface", ["agent", "jarvis"])
