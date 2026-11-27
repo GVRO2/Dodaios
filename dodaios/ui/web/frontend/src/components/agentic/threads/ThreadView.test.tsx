@@ -38,6 +38,19 @@ vi.mock("@/lib/chatLibraryApi", async (importOriginal) => ({
   fetchProjectLaunchers: vi.fn().mockResolvedValue({ file_manager: true, editors: [{ id: "code", label: "VS Code" }], remote_url: null, remote_label: null }),
 }));
 
+// The model picker as it is, noting what the composer hands it.
+const picker = vi.hoisted(() => ({ props: null as null | { lockedProvider: string | null; onPick: (provider: string, model: string) => void } }));
+vi.mock("./ThreadPickers", async (importOriginal) => {
+  const real = await importOriginal<typeof import("./ThreadPickers")>();
+  return {
+    ...real,
+    AgentModelPicker: (props: Parameters<typeof real.AgentModelPicker>[0]) => {
+      picker.props = props;
+      return <real.AgentModelPicker {...props} />;
+    },
+  };
+});
+
 import { ThreadView } from "./ThreadView";
 import { ThreadTree } from "./ThreadTree";
 import { setDraggedThread, useThreadChatStore } from "./threadModel";
@@ -730,3 +743,55 @@ describe("ThreadTree", () => {
     expect(before(lines[0], screen.getByTestId("thread-row-s2"))).toBe(true);
   });
 });
+
+describe("changing the coding agent of a started thread", () => {
+  const second = {
+    ...CATALOG.providers[0], id: "openai-codex", label: "Second agent", runner: "codex-cli", agent: "codex",
+    permission_modes: [{ id: "full-access", label: "Full access", description: "" }], default_permission_mode: "full-access",
+  };
+
+  async function openStartedThread(row: Partial<AgentChatSession> = {}) {
+    api.fetchAgentChatCatalog.mockResolvedValue({ ...CATALOG, providers: [CATALOG.providers[0], second] });
+    api.fetchAgentChatSessions.mockResolvedValue([sessionRow(row)]);
+    useThreadChatStore.getState().newChat();
+    useIdeThreadsStore.setState({ selection: { projectId: "p1", sessionId: "s1" } });
+    render(<ThreadView onScreen />);
+    await waitFor(() => expect(useThreadChatStore.getState().activeSession?.session_id).toBe("s1"));
+    await waitFor(() => expect(useThreadChatStore.getState().providerById("openai-codex")).toBeTruthy());
+    act(() => {
+      const store = useThreadChatStore.getState();
+      store.ingest({ seq: 1, ts_ms: 1000, kind: "user_message", payload: { text: "fix the login test" } });
+      store.ingest({ seq: 2, ts_ms: 1000, kind: "turn_started", payload: { turn_id: "t1", provider: "claude-api", model: "", effort: "high", runner: "claude-cli" } });
+    });
+  }
+
+  const finishTurn = () => act(() => {
+    useThreadChatStore.getState().ingest({ seq: 3, ts_ms: 2000, kind: "turn_finished", payload: { turn_id: "t1", status: "done", duration_ms: 1000, usage: null, error: null } });
+  });
+
+  it("offers every agent once the turn is over, and only the thread's own while it runs", async () => {
+    await openStartedThread();
+    expect(picker.props?.lockedProvider).toBe("claude-api");
+    finishTurn();
+    expect(picker.props?.lockedProvider).toBeNull();
+  });
+
+  it("keeps a team member on the agent its team runs it on", async () => {
+    await openStartedThread({ team_id: "team-1" });
+    finishTurn();
+    expect(picker.props?.lockedProvider).toBe("claude-api");
+  });
+
+  it("leaves the access mode to the app, so the pick never widens it", async () => {
+    await openStartedThread();
+    finishTurn();
+    api.patchAgentChatSession.mockResolvedValue(sessionRow({ provider: "openai-codex", permission_mode: "default" }));
+    await act(async () => { picker.props?.onPick("openai-codex", ""); });
+    await waitFor(() => expect(api.patchAgentChatSession).toHaveBeenCalled());
+    const [sid, body] = api.patchAgentChatSession.mock.calls.at(-1)!;
+    expect(sid).toBe("s1");
+    expect(body).toMatchObject({ provider: "openai-codex" });
+    expect(body).not.toHaveProperty("permission_mode");
+  });
+});
+

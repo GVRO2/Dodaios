@@ -1143,8 +1143,8 @@ export function createAgentChatStore(
           if (patch.provider !== undefined || patch.model !== undefined) body.model = draft.model;
           if (patch.provider !== undefined || patch.effort !== undefined) body.effort = draft.effort;
           if (patch.provider !== undefined || patch.speed !== undefined) body.speed = draft.speed ?? "";
-          if (patch.provider !== undefined || patch.permissionMode !== undefined) {
-            body.permission_mode = draft.permissionMode;
+          if (patch.permissionMode !== undefined || (patch.provider !== undefined && surface !== "agent")) {
+            body.permission_mode = draft.permissionMode; // A thread's own mode is carried over by the app.
           }
           if (patch.cwd !== undefined) body.cwd = draft.cwd;
           if (patch.computerId !== undefined) body.computer_id = patch.computerId;

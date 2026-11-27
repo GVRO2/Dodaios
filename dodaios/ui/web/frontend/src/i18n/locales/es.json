@@ -10734,6 +10734,7 @@
     "no_local_branches": "Aún no hay ramas locales.",
     "hint_new_thread": "hilo nuevo",
     "hint_connect_first": "conéctalo primero",
+    "hint_after_turn": "después de este turno",
     "agent_model_aria": "Agente de programación y modelo",
     "choose_agent": "Elige un agente",
     "loading_agents": "Cargando agentes…",

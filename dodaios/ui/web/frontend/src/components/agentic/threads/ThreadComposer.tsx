@@ -441,7 +441,6 @@ export function ThreadComposer({
   const provider = providers.find((option) => option.id === draft.provider) ?? null;
   const live = runningTurn(timeline);
   const running = live !== null || Boolean(activeSession?.running);
-  const started = timeline.items.length > 0;
   // Claude Code and GLM take a waiting message into the running turn on Send
   // now; every other agent has that turn stopped for it.
   const steers = STEERABLE_RUNNERS.has(provider?.runner ?? "");
@@ -451,6 +450,12 @@ export function ThreadComposer({
   // the queue, and the button is the send arrow, not Stop.
   const free = running && steers && live !== null && waitsInBackground(live);
   const working = running && !free;
+  // A thread moves to another coding agent between turns, and the new one is handed
+  // its history. A running turn is refused by the app, and a team keeps each
+  // member on the agent it planned with.
+  const teamMember = chat((state) => Boolean(
+    state.sessions.find((row) => row.session_id === state.activeSessionId)?.team_id ?? state.activeSession?.team_id));
+  const agentLocked = Boolean(activeSessionId) && (running || teamMember);
 
   // A coding thread only runs on a coding agent: an API row left in the draft
   // from elsewhere moves to the first connected CLI.
@@ -869,7 +874,8 @@ export function ThreadComposer({
         {/* The pickers keep their width: a narrow column (side by side) scrolls the row instead of stacking them. */}
         <div className="-ms-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&>*]:shrink-0">
         <AgentModelPicker providers={providers} liveModels={liveModels} draft={draft}
-          lockedProvider={started && activeSessionId ? draft.provider : null} subagentModel={subagentModel}
+          lockedProvider={agentLocked ? draft.provider : null} subagentModel={subagentModel}
+          lockedHint={teamMember ? undefined : t("ide_threads.hint_after_turn")}
           onPick={(nextProvider, model) => void pick(nextProvider !== draft.provider ? { provider: nextProvider, model } : { model })} />
         <EffortPicker provider={provider} draft={draft} liveModels={liveModels} separated
           onPick={(effort) => void pick({ effort })} onPickSpeed={(speed) => void pick({ speed })} />

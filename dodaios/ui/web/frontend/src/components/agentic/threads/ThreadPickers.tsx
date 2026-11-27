@@ -65,14 +65,17 @@ export function AgentModelPicker({
   liveModels,
   draft,
   lockedProvider,
+  lockedHint,
   subagentModel = "",
   onPick,
 }: {
   providers: ProviderOption[];
   liveModels: Record<string, CuratedModel[]>;
   draft: ComposerDraft;
-  /** A thread that has started keeps its coding agent; only the model can change. */
+  /** The only coding agent on offer right now; null offers every connected one. */
   lockedProvider: string | null;
+  /** Why the others are not on offer; the default says a new thread takes them. */
+  lockedHint?: string;
   /** The model of the sub-agent open on screen; it stands in for the pick, which cannot change it. */
   subagentModel?: string;
   onPick: (provider: string, model: string) => void;
@@ -86,7 +89,7 @@ export function AgentModelPicker({
   const groups = useMemo<ComboboxGroup[]>(() => providers.map((provider) => {
     const locked = lockedProvider !== null && provider.id !== lockedProvider;
     const disabled = !provider.connected || locked;
-    const hint = locked ? newThreadHint : !provider.connected ? (provider.cli_installed === false ? notInstalledHint : connectFirstHint) : undefined;
+    const hint = locked ? lockedHint ?? newThreadHint : !provider.connected ? (provider.cli_installed === false ? notInstalledHint : connectFirstHint) : undefined;
     const icon = <ProviderMark provider={provider} />;
     // Whose model a row is, on a quiet second line under its name.
     const owner = (note?: string) => <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -116,7 +119,7 @@ export function AgentModelPicker({
         : [{ value: brainValue(provider.id, ""), label: agentName(provider), description: owner(), hint, disabled, searchText: agentName(provider) }],
       more: ranked.older.length ? { label: olderLabel, options: ranked.older.map(toOption) } : undefined,
     };
-  }), [providers, liveModels, lockedProvider, draft.provider, draft.model, saved, olderLabel, newThreadHint, notInstalledHint, connectFirstHint]);
+  }), [providers, liveModels, lockedProvider, lockedHint, draft.provider, draft.model, saved, olderLabel, newThreadHint, notInstalledHint, connectFirstHint]);
   // The rail on the panel's left: one mark per coding agent, plus favourites.
   const sections = useMemo<BrainSection[]>(() => providers.map((provider) => ({
     id: provider.id,

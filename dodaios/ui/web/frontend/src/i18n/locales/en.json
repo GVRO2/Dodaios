@@ -10734,6 +10734,7 @@
     "no_local_branches": "No local branches yet.",
     "hint_new_thread": "new thread",
     "hint_connect_first": "connect first",
+    "hint_after_turn": "after this turn",
     "agent_model_aria": "Coding agent and model",
     "choose_agent": "Choose an agent",
     "loading_agents": "Loading agents…",

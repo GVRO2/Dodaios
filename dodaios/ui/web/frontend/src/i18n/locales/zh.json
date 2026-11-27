@@ -10734,6 +10734,7 @@
     "no_local_branches": "还没有本地分支。",
     "hint_new_thread": "新线程",
     "hint_connect_first": "请先连接",
+    "hint_after_turn": "本轮结束后",
     "agent_model_aria": "编程智能体和模型",
     "choose_agent": "选择智能体",
     "loading_agents": "正在加载智能体…",

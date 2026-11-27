@@ -110,7 +110,11 @@ news since it was last opened.
   for it). Stop also ends that wait. A process the CLI left behind that
   still holds its output open does not hold the turn either.
 - **Composer:** one toolbar — coding agent and model, reasoning effort, access
-  mode — beside the paperclip and the send button. A new thread starts on the
+  mode — beside the paperclip and the send button. Between turns a started
+  thread can move to another connected coding agent: the new one is handed the
+  thread's history, and the access mode is carried over to its closest level.
+  While a turn runs, and in a team member's thread, the agent stays. A new
+  thread starts on the
   agent, model, effort and access the person picked last (else the newest
   thread's). Files and images go in by drop, paste or paperclip; `/` `@` `$`
   open the typeahead where the CLI offers it. On Claude Code and GLM the `/`
