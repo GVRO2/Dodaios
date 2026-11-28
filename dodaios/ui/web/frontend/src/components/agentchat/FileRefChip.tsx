@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { File, Folder } from "lucide-react";
 
 import { QuickTooltip } from "@/components/ui/tooltip";
-import { ChatFileIcon, type FileRef } from "./chatPaths";
+import { ChatFileIcon, isHtmlPath, type FileRef } from "./chatPaths";
 import { fileRefLabel } from "./fileRefs";
 
 /** Past this many characters a label may wrap, so a very long name cannot push the column sideways. */
@@ -36,6 +36,7 @@ export function FileRefChip({ fileRef, written, suffix, onOpen }: {
   const glyph = "mr-[0.25em] inline-block h-[1em] w-[1em] shrink-0 align-[-0.15em]";
   return <QuickTooltip side="top" className="inline" content={<span className="font-mono text-xs [overflow-wrap:anywhere]">{written}</span>}>
     <a href={`#jarvis-local=${encodeURIComponent(fileRef.path)}`} data-testid="chat-path-link" data-file-ref={folder ? "folder" : "file"}
+      data-html-page={isHtmlPath(fileRef.path) ? fileRef.path : undefined}
       className={`not-prose group cursor-pointer rounded-sm font-medium text-accent no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${label.length <= NOWRAP_MAX ? "whitespace-nowrap" : ""}`}
       onClick={(event) => { event.preventDefault(); onOpen(); }}>
       {folder

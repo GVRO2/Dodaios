@@ -8361,6 +8361,22 @@
       "korean": "韩文"
     }
   },
+  "html_link": {
+    "title": "如何打开此页面？",
+    "warning": "在浏览器中会运行页面的脚本。您的选择会被记住，可在设置中更改。",
+    "open_chrome": "在 Google Chrome 中打开",
+    "show_source": "显示源代码",
+    "not_chrome": "未找到 Google Chrome，页面已在其他浏览器中打开。",
+    "open_failed": "无法在浏览器中打开此页面。",
+    "network_file": "此文件位于网络上的另一台计算机，因此未在浏览器中打开。",
+    "not_a_page": "这不是 HTML 文件，因此未在浏览器中打开。",
+    "save_failed": "您的选择未保存。",
+    "setting_title": "HTML 链接",
+    "setting_description": "点击回答中的 HTML 文件时执行的操作。",
+    "mode_ask": "询问",
+    "mode_browser": "浏览器",
+    "mode_source": "源代码"
+  },
   "ide_side_panel": {
     "aria": "侧边面板",
     "tabs_aria": "侧边面板标签页",
@@ -9514,6 +9530,9 @@
       "views": "文件视图",
       "view_file": "文件",
       "view_change": "更改",
+      "view_preview": "预览",
+      "view_source": "源代码",
+      "preview_partial": "静态预览：脚本不会运行，链接的图片和文件不会加载。",
       "reload": "重新读取文件",
       "loading": "正在读取文件",
       "binary": "此文件不是文本，无法在此显示。",

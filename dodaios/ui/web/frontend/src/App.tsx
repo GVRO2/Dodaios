@@ -25,6 +25,7 @@ import { InputIsolationBanner } from "@/components/layout/InputIsolationBanner";
 import { VoiceWarmingBanner } from "@/components/layout/VoiceWarmingBanner";
 import { MainView } from "@/components/layout/MainView";
 import { ToastLayer } from "@/components/ToastLayer";
+import { HtmlOpenDialog } from "@/components/agentic/threads/HtmlOpenDialog";
 import { PluginReconnectHost } from "@/components/PluginReconnectHost";
 import { AppshotEditorHost } from "@/components/appshot/AppshotEditorHost";
 import { EditContextMenu } from "@/components/EditContextMenu";
@@ -297,6 +298,7 @@ export default function App() {
           </div>
         </main>
         <ToastLayer />
+        <HtmlOpenDialog />
         {/* Only this window's own "Edit" opens it here; the card's request
             goes to the main window (handleAppshotEditRequest). */}
         <AppshotEditorHost />
@@ -378,6 +380,7 @@ export default function App() {
       <ToastLayer>
         <PluginReconnectHost />
       </ToastLayer>
+      <HtmlOpenDialog />
       {/* A node opened from a conversation: a window over the app, the node on
           the left and that conversation on the right (components/nodes/peek).
           Inside this root, so the window caption stays above it. */}

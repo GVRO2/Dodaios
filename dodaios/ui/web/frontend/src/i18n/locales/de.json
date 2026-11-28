@@ -8361,6 +8361,22 @@
       "korean": "Koreanisch"
     }
   },
+  "html_link": {
+    "title": "Wie soll diese Seite geöffnet werden?",
+    "warning": "Im Browser laufen die Skripte der Seite. Die Wahl wird gespeichert; du kannst sie in den Einstellungen ändern.",
+    "open_chrome": "In Google Chrome öffnen",
+    "show_source": "Quelltext anzeigen",
+    "not_chrome": "Google Chrome wurde nicht gefunden; die Seite wurde in einem anderen Browser geöffnet.",
+    "open_failed": "Die Seite konnte in keinem Browser geöffnet werden.",
+    "network_file": "Diese Datei liegt auf einem anderen Computer im Netzwerk und wurde deshalb nicht im Browser geöffnet.",
+    "not_a_page": "Das ist keine HTML-Datei und wurde deshalb nicht im Browser geöffnet.",
+    "save_failed": "Deine Wahl wurde nicht gespeichert.",
+    "setting_title": "HTML-Links",
+    "setting_description": "Was ein Klick auf eine HTML-Datei in einer Antwort tut.",
+    "mode_ask": "Fragen",
+    "mode_browser": "Browser",
+    "mode_source": "Quelltext"
+  },
   "ide_side_panel": {
     "aria": "Seitenleiste",
     "tabs_aria": "Tabs der Seitenleiste",
@@ -9514,6 +9530,9 @@
       "views": "Ansichten der Datei",
       "view_file": "Datei",
       "view_change": "Änderung",
+      "view_preview": "Vorschau",
+      "view_source": "Quelltext",
+      "preview_partial": "Statische Vorschau: Skripte laufen nicht, verlinkte Bilder und Dateien werden nicht geladen.",
       "reload": "Datei neu lesen",
       "loading": "Datei wird gelesen",
       "binary": "Diese Datei ist kein Text und kann hier nicht angezeigt werden.",

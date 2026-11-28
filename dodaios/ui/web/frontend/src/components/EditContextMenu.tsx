@@ -6,7 +6,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { Clipboard, Copy, ExternalLink, Link2, Scissors, TextSelect } from "lucide-react";
+import { Clipboard, Copy, ExternalLink, FileCode2, Link2, Scissors, TextSelect } from "lucide-react";
 
 import { useT } from "@/i18n";
 import { hasEmbeddedDesktopBridge } from "@/lib/embeddedDesktop";
@@ -87,7 +87,10 @@ export function EditContextMenu() {
       const caps = capabilitiesFor(snapshot);
       const target = event.target instanceof Element ? event.target : null;
       const groups = collectContextActions(target);
-      const link = linkUnder(target);
+      // An HTML file an answer names offers its two views instead of the link entries.
+      const page = target?.closest("[data-html-page]") ?? null;
+      const link = page ? null : linkUnder(target);
+      if (page) groups.unshift(htmlPageActions(page, tRef.current));
       if (link) groups.unshift(linkActions(link, tRef.current));
       // Nothing useful to offer (e.g. a right-click on empty chrome with no
       // selection) — stay out of the way rather than show a dead menu.
@@ -294,6 +297,22 @@ function linkActions(href: string, t: (key: string) => string): ContextAction[] 
       },
     },
   ];
+}
+
+/** A browser can only be offered to a page that was loaded from this computer. */
+const onThisComputer = () => ["127.0.0.1", "localhost", "[::1]"].includes(window.location.hostname);
+
+/** "Show source" and "Open in Google Chrome" for an HTML file a thread's answer names. */
+function htmlPageActions(page: Element, t: (key: string) => string): ContextAction[] {
+  const path = page.getAttribute("data-html-page") ?? "";
+  const folder = page.closest("[data-thread-folder]")?.getAttribute("data-thread-folder") ?? "";
+  const open = (view: "browser" | "source") => async () => {
+    const { openHtmlLink } = await import("@/components/agentic/threads/openHtmlLink");
+    await openHtmlLink(path, folder, view);
+  };
+  const source: ContextAction = { id: "html-source", label: t("html_link.show_source"), icon: FileCode2, run: open("source") };
+  if (!onThisComputer()) return [source];
+  return [source, { id: "html-browser", label: t("html_link.open_chrome"), icon: ExternalLink, run: open("browser") }];
 }
 
 function MenuDivider() {

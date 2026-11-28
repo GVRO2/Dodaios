@@ -59,8 +59,8 @@ EXPECTED_BOOT_ORDER = [
     "_init_channel_stack",
 ]
 
-EXPECTED_ROUTE_COUNT = 131
-EXPECTED_ROUTE_DIGEST = "e95fb951eda332eb997f0e351e8bdaecd055d08276dc95ffbb5b1599a97b098b"
+EXPECTED_ROUTE_COUNT = 132
+EXPECTED_ROUTE_DIGEST = "49d059d47b63f1743d497da20d4cc978b78eb73157c4f5328d3ccdbe68fd07eb"
 
 
 def _mounted(server: WebServer) -> list[tuple[str, str]]:

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { LookPickerRow } from "@/views/settings/LookPickerRow";
+import { HtmlLinkRow } from "@/views/settings/HtmlLinkRow";
 import { Monitor, Moon, Sun, Zap } from "lucide-react";
 import { SETUP_REPLAY_EVENT } from "@/components/onboarding/tourEvents";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export function AppSettingsGroup({ children }: { children?: ReactNode } = {}) {
       <SettingsCard>
         <AppearanceRow />
         <LookPickerRow />
+        <HtmlLinkRow />
         <AutostartRow />
         <BackgroundAgentsRows />
         {children}

@@ -1158,6 +1158,15 @@ def set_preferred_opener(opener: str, *, path: Path = DEFAULT_CONFIG_FILE) -> No
     _patch_table(path, "ui", "preferred_opener", opener)
 
 
+def set_ui_html_link_open(mode: str, *, path: Path = DEFAULT_CONFIG_FILE) -> None:
+    """Persist how HTML links in answers open in ``[ui] html_link_open``.
+
+    ``mode`` is one of ``ask`` | ``browser`` | ``source`` (validated by the
+    caller).
+    """
+    _patch_table(path, "ui", "html_link_open", mode)
+
+
 def set_wake_word(
     phrase: str,
     *,

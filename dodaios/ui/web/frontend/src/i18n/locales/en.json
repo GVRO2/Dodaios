@@ -8361,6 +8361,22 @@
       "korean": "Korean"
     }
   },
+  "html_link": {
+    "title": "How should this page open?",
+    "warning": "In the browser the page's scripts run. Your choice is remembered; you can change it in Settings.",
+    "open_chrome": "Open in Google Chrome",
+    "show_source": "Show source",
+    "not_chrome": "Google Chrome was not found, so the page opened in another browser.",
+    "open_failed": "The page could not be opened in a web browser.",
+    "network_file": "This file is on another computer on the network, so it was not opened in the browser.",
+    "not_a_page": "This is not an HTML file, so it was not opened in the browser.",
+    "save_failed": "Your choice was not saved.",
+    "setting_title": "HTML links",
+    "setting_description": "What a click on an HTML file in an answer does.",
+    "mode_ask": "Ask",
+    "mode_browser": "Browser",
+    "mode_source": "Source"
+  },
   "ide_side_panel": {
     "aria": "Side panel",
     "tabs_aria": "Side panel tabs",
@@ -9514,6 +9530,9 @@
       "views": "File views",
       "view_file": "File",
       "view_change": "Change",
+      "view_preview": "Preview",
+      "view_source": "Source",
+      "preview_partial": "Static preview: scripts do not run, and linked pictures and files are not loaded.",
       "reload": "Read the file again",
       "loading": "Reading the file",
       "binary": "This file is not text, so it cannot be shown here.",

@@ -15,6 +15,9 @@ vi.mock("@/hooks/useTheme", async (importOriginal) => ({
   }),
 }));
 
+// Same reason: the HTML links row reads its own setting.
+vi.mock("@/views/settings/HtmlLinkRow", () => ({ HtmlLinkRow: () => null }));
+
 import { AppSettingsGroup } from "./AppSettingsGroup";
 
 // A supported desktop host with autostart enabled (the default after the

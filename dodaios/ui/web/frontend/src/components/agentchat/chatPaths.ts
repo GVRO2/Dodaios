@@ -129,3 +129,8 @@ export function pathInCode(raw: string): string | null {
   }
   return FILE_EXTENSIONS.has(extension) || DOT_FILES.test(name) ? path : null;
 }
+
+/** A page to look at rather than code to read: its link opens in a browser. */
+export function isHtmlPath(path: string): boolean {
+  return /\.html?$/i.test(path.trim());
+}

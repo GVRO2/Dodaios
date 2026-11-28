@@ -16,6 +16,7 @@ import { absoluteFilePath, useSideFileStore } from "@/store/sideFile";
 import { editHunks } from "./editHunks";
 import { discardDraft } from "./fileDrafts";
 import type { SavedFile } from "./FileEditor";
+import { HtmlStaticPreview } from "./HtmlStaticPreview";
 
 // The editor engine is several megabytes: it loads the first time a file opens here.
 const FileEditor = lazy(() => import("./FileEditor"));
@@ -65,13 +66,14 @@ export function FileTab() {
   const chatWorkspace = usePanelWorkspace()?.id ?? null;
   const activeWorkspace = useIdeProjectsStore((state) => state.activeWorkspaceId);
   const workspaceId = chatWorkspace ?? activeWorkspace;
-  const [view, setView] = useState<"file" | "change">("file");
+  const [view, setView] = useState<"file" | "change" | "preview">("file");
   const [loaded, setLoaded] = useState<Loaded>({ state: "loading" });
   const [reload, setReload] = useState(0);
 
   // A click on an edit shows what it changed; any other click shows the file.
   const clickedEdit = Boolean(file?.diff?.length);
-  useEffect(() => { setView(clickedEdit ? "change" : "file"); }, [nonce, clickedEdit]);
+  const askedPreview = Boolean(file?.preview);
+  useEffect(() => { setView(clickedEdit ? "change" : askedPreview ? "preview" : "file"); }, [nonce, clickedEdit, askedPreview]);
 
   const absolute = file ? absoluteFilePath(file.path, file.folder) : "";
   useEffect(() => {
@@ -124,9 +126,10 @@ export function FileTab() {
   const changes = file.diff ?? [];
   const added = changes.reduce((sum, change) => sum + change.added, 0);
   const removed = changes.reduce((sum, change) => sum + change.removed, 0);
-  const shown = view === "change" && hasChange ? "change" : "file";
+  const hasPreview = askedPreview && /\.html?$/i.test(name);
+  const shown = view === "change" && hasChange ? "change" : view === "preview" && hasPreview ? "preview" : "file";
   const language = loaded.state === "ready" && loaded.text.length <= HIGHLIGHT_MAX_CHARS ? fileLanguage(name) : "";
-  const tabButton = (id: "file" | "change", label: string) => <button type="button" role="tab" aria-selected={shown === id}
+  const tabButton = (id: "file" | "change" | "preview", label: string) => <button type="button" role="tab" aria-selected={shown === id}
     onClick={() => setView(id)}
     className={cn("rounded-md px-2 py-0.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       shown === id ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground")}>{label}</button>;
@@ -141,9 +144,10 @@ export function FileTab() {
         {file.line && shown === "file" && <span className="ml-1.5 shrink-0 text-muted-foreground" data-testid="side-file-line">L{file.line}</span>}
       </span>
       {shown === "change" && <DiffStat added={added} removed={removed} />}
-      {hasChange && <div role="tablist" aria-label={t("ide_side_panel.file.views")} className="flex shrink-0 items-center gap-0.5">
-        {tabButton("file", t("ide_side_panel.file.view_file"))}
-        {tabButton("change", t("ide_side_panel.file.view_change"))}
+      {(hasChange || hasPreview) && <div role="tablist" aria-label={t("ide_side_panel.file.views")} className="flex shrink-0 items-center gap-0.5">
+        {hasPreview && tabButton("preview", t("ide_side_panel.file.view_preview"))}
+        {tabButton("file", t(hasPreview ? "ide_side_panel.file.view_source" : "ide_side_panel.file.view_file"))}
+        {hasChange && tabButton("change", t("ide_side_panel.file.view_change"))}
       </div>}
       <button type="button" aria-label={t("ide_side_panel.file.reload")} title={t("ide_side_panel.file.reload")}
         onClick={readAgain}
@@ -163,6 +167,8 @@ export function FileTab() {
             </p>}
           </div>)}
         </div>
+        : shown === "preview" && loaded.state === "ready"
+          ? <HtmlStaticPreview name={name} text={loaded.text} />
         : loaded.state === "loading"
           ? <div className="flex h-full items-center justify-center"><Loader2 aria-label={t("ide_side_panel.file.loading")} className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           : loaded.state === "media" && workspaceId

@@ -15,7 +15,7 @@ import { CodingAgentLink } from "@/components/agentic/threads/CodingAgentLink";
 import { parseToolResult, ToolResultCard } from "./ToolResultCard";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 import { MediaPreview, mediaKind, safeMediaUrl } from "./MediaPreview";
-import { ChatPathOpener, fileRefInCode, splitLocation } from "./chatPaths";
+import { ChatPathOpener, fileRefInCode, isHtmlPath, splitLocation } from "./chatPaths";
 import { FileRefChip } from "./FileRefChip";
 import { fileRefKey, fileRefsInMarkdown, fileRefSuffixes } from "./fileRefs";
 
@@ -191,7 +191,10 @@ const MARKDOWN_COMPONENTS: Components = {
       const open = () => (fileRef.line ? openBeside(fileRef.path, fileRef.line) : openBeside(fileRef.path));
       return <FileRefChip fileRef={fileRef} written={local} onOpen={open} />;
     }
-    return <a href={href} title={local || undefined} onClick={event => openLocal(event, href, label, openBeside)}>{children}</a>;
+    // An HTML file in a thread carries its path, so a right-click can offer its other view.
+    const named = local && openBeside ? splitLocation(local).path : "";
+    return <a href={href} title={local || undefined} data-html-page={isHtmlPath(named) ? named : undefined}
+      onClick={event => openLocal(event, href, label, openBeside)}>{children}</a>;
   },
   // A file or folder the answer names in code (`todo.md`, `C:\…\clip.mp4`)
   // opens beside the conversation, where a thread offers that.

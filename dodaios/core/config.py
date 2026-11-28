@@ -1521,6 +1521,15 @@ class UIConfig(BaseModel):
     # Remembered "open with" choice for Outputs artifacts ("default", "browser" or an editor key);
     # empty = ask.
     preferred_opener: str = ""
+    # How an HTML link in an answer opens: "ask" (first click asks), "browser" or "source".
+    html_link_open: str = "ask"
+
+    @field_validator("html_link_open", mode="before")
+    @classmethod
+    def _normalize_html_link_open(cls, v: object) -> object:
+        # A hand-edited value outside the choices asks again rather than guessing.
+        value = str(v).strip().lower()
+        return value if value in {"ask", "browser", "source"} else "ask"
 
     @field_validator("orb_style", mode="before")
     @classmethod

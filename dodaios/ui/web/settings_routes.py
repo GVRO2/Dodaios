@@ -526,6 +526,44 @@ def _current_ui_theme(request: Request) -> str:
     return str(getattr(getattr(cfg, "ui", None), "theme", "dark"))
 
 
+# How an HTML link in an answer opens. "ask" until the person answers once.
+_HTML_LINK_OPEN_MODES: tuple[str, ...] = ("ask", "browser", "source")
+
+
+class HtmlLinkOpenBody(BaseModel):
+    mode: str = Field(..., min_length=1, description="ask | browser | source")
+
+
+@router.get("/html-link-open")
+def get_html_link_open() -> dict[str, object]:
+    """The remembered way HTML links open, plus the values this build accepts."""
+    from dodaios.core.config import load_config
+
+    return {"mode": load_config().ui.html_link_open, "options": list(_HTML_LINK_OPEN_MODES)}
+
+
+@router.put("/html-link-open")
+async def put_html_link_open(body: HtmlLinkOpenBody) -> dict[str, object]:
+    """Remember how HTML links open."""
+    mode = body.mode.strip().lower()
+    if mode not in _HTML_LINK_OPEN_MODES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown mode {body.mode!r} (allowed: {list(_HTML_LINK_OPEN_MODES)})",
+        )
+    from dodaios.core import config_writer
+    from dodaios.core.config import resolve_config_path
+
+    try:
+        await asyncio.to_thread(
+            config_writer.set_ui_html_link_open, mode, path=resolve_config_path()
+        )
+    except OSError as exc:
+        log.warning("html-link-open persist failed: %s", exc)
+        raise HTTPException(status_code=500, detail="The choice was not saved.") from exc
+    return {"mode": mode}
+
+
 @router.get("/appearance")
 def get_appearance(request: Request) -> dict[str, object]:
     """The app's colour theme, plus the values this build accepts."""

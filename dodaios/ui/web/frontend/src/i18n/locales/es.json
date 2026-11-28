@@ -8361,6 +8361,22 @@
       "korean": "Coreano"
     }
   },
+  "html_link": {
+    "title": "¿Cómo abrir esta página?",
+    "warning": "En el navegador se ejecutan los scripts de la página. La elección se guarda; puedes cambiarla en Ajustes.",
+    "open_chrome": "Abrir en Google Chrome",
+    "show_source": "Mostrar código fuente",
+    "not_chrome": "No se encontró Google Chrome; la página se abrió en otro navegador.",
+    "open_failed": "No se pudo abrir la página en un navegador.",
+    "network_file": "Este archivo está en otro equipo de la red, así que no se abrió en el navegador.",
+    "not_a_page": "No es un archivo HTML, así que no se abrió en el navegador.",
+    "save_failed": "Tu elección no se guardó.",
+    "setting_title": "Enlaces HTML",
+    "setting_description": "Qué ocurre al hacer clic en un archivo HTML de una respuesta.",
+    "mode_ask": "Preguntar",
+    "mode_browser": "Navegador",
+    "mode_source": "Código fuente"
+  },
   "ide_side_panel": {
     "aria": "Panel lateral",
     "tabs_aria": "Pestañas del panel lateral",
@@ -9514,6 +9530,9 @@
       "views": "Vistas del archivo",
       "view_file": "Archivo",
       "view_change": "Cambio",
+      "view_preview": "Vista previa",
+      "view_source": "Código fuente",
+      "preview_partial": "Vista previa estática: los scripts no se ejecutan y no se cargan las imágenes ni los archivos enlazados.",
       "reload": "Volver a leer el archivo",
       "loading": "Leyendo el archivo",
       "binary": "Este archivo no es texto, así que no se puede mostrar aquí.",

@@ -4,7 +4,7 @@ import { planOps, planSpans, planViews, samePlanOps, type PlanOp, type PlanView 
 import { ChatMarkdown, MediaPreview } from "@/components/agentchat/ChatMarkdown";
 import { isRemoteMedia, MediaViewerContent } from "@/components/agentchat/MediaPreview";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChatFileIcon, ChatPathOpener } from "@/components/agentchat/chatPaths";
+import { isHtmlPath, ChatFileIcon, ChatPathOpener } from "@/components/agentchat/chatPaths";
 import { CredentialCard } from "@/components/agentchat/CredentialCard";
 import { QuestionCard } from "@/components/agentchat/QuestionCard";
 import { ASIDE_ASKED, CONVERSATION_CLEARED, STEER_PREFIX, waitsOnCard, type NoticeItem, type SetupStep, type TextBlock, type TimelineItem, type ToolBlock, type TurnBlock, type TurnItem, type UserAttachment, type UserItem } from "@/components/agentchat/reduce";
@@ -1361,11 +1361,16 @@ export function ThreadTimeline({ items, sessionId, bottomInset, folder = "", lea
   }, []);
 
   // A file or folder the answers name opens beside the conversation, at the line they name.
+  // An HTML file named without a line is a page to look at, not code to read.
   const openPath = useCallback((path: string, line?: number) => {
+    if (!line && isHtmlPath(path)) {
+      void import("./openHtmlLink").then((module) => module.openHtmlLink(path, folder));
+      return;
+    }
     void import("./openPathBeside").then((module) => module.openPathBeside(path, folder, line));
   }, [folder]);
 
-  return <ThreadFolder.Provider value={folder}><ChatPathOpener.Provider value={openPath}><ChatFileIcon.Provider value={FileTypeIcon}><div className="relative min-h-0 flex-1">
+  return <ThreadFolder.Provider value={folder}><ChatPathOpener.Provider value={openPath}><ChatFileIcon.Provider value={FileTypeIcon}><div className="relative min-h-0 flex-1" data-thread-folder={folder}>
     <div ref={scroller} data-testid="thread-timeline"
       onScroll={(event) => {
         const box = event.currentTarget;

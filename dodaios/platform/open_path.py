@@ -769,13 +769,162 @@ def prepare_chat_open(raw: str) -> Path:
     return target
 
 
+# --- One local HTML file into a web browser ---------------------------------
+#
+# Separate from ``open_url`` on purpose: that one stays limited to web addresses,
+# so a crafted address can never launch a local file. This path takes a file
+# that was checked here, and never follows the system's file association, which
+# for ``.html`` may be a text or code editor.
+
+_HTML_SUFFIXES = frozenset({".html", ".htm"})
+_DRIVE_REMOTE = 4  # GetDriveTypeW
+_LINUX_CHROME_BINS = ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser")
+
+
+class HtmlOpenRejected(ValueError):
+    """The file is not a local HTML page: not-found, not-html or network-file."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(reason)
+
+
+def _is_share_path(path: Path) -> bool:
+    raw = str(path).replace("\\", "/")
+    if raw.upper().startswith("//?/") and not raw.upper().startswith("//?/UNC/"):
+        return False  # The long-path form of a local drive.
+    return raw.startswith("//")
+
+
+def _on_network_drive(path: Path) -> bool:
+    """True for a Windows drive letter that is mapped to another machine."""
+    if os.name != "nt":
+        return False
+    drive = path.drive.removeprefix("\\?\\")
+    if not re.fullmatch(r"[A-Za-z]:", drive):
+        return False
+    import ctypes
+
+    return ctypes.windll.kernel32.GetDriveTypeW(drive + "\\") == _DRIVE_REMOTE
+
+
+def prepare_html_open(path: Path) -> Path:
+    """The real file behind *path*, if it is a local HTML page.
+
+    Links in the file system are followed before the kind is judged, so a link
+    named ``report.html`` that points at a program is refused. A share path is
+    refused before anything touches it.
+    """
+    if _is_share_path(path):
+        raise HtmlOpenRejected("network-file")
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise HtmlOpenRejected("not-found") from exc
+    if _is_share_path(resolved) or _on_network_drive(resolved):
+        raise HtmlOpenRejected("network-file")
+    if resolved.suffix.lower() not in _HTML_SUFFIXES or not resolved.is_file():
+        raise HtmlOpenRejected("not-html")
+    return resolved
+
+
+def _launch_browser(argv: list[str]) -> bool:
+    try:
+        subprocess.Popen(  # noqa: S603
+            argv, creationflags=NO_WINDOW_CREATIONFLAGS, close_fds=True
+        )
+        return True
+    except OSError as exc:
+        log.warning("open_html: %s failed (%s)", argv[0], type(exc).__name__)
+        return False
+
+
+def _open_html_windows(url: str) -> str:
+    candidates = _windows_browser_candidates()
+    # Chrome first; the rest keeps the default browser at the head.
+    ordered = sorted(candidates, key=lambda exe: not exe.lower().endswith("chrome.exe"))
+    for exe in ordered:
+        if _launch_browser([exe, url]):
+            return "chrome" if exe.lower().endswith("chrome.exe") else "default"
+    return "none"
+
+
+def _open_html_macos(url: str) -> str:
+    for app in _MACOS_BROWSER_APPS:
+        if _run_opener_checked(["open", "-a", app, url]):
+            return "chrome" if app == "Google Chrome" else "default"
+    return "none"
+
+
+def _linux_default_browser_entry() -> str | None:
+    """The desktop entry of the default web browser, e.g. ``firefox.desktop``."""
+    tool = shutil.which("xdg-settings")
+    if not tool:
+        return None
+    try:
+        proc = subprocess.run(  # noqa: S603
+            [tool, "get", "default-web-browser"],
+            creationflags=NO_WINDOW_CREATIONFLAGS,
+            close_fds=True,
+            timeout=_OPENER_TIMEOUT_S,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        log.warning("open_html: no default browser answer (%s)", type(exc).__name__)
+        return None
+    entry = (proc.stdout or "").strip()
+    return entry if proc.returncode == 0 and entry.endswith(".desktop") else None
+
+
+def _open_html_linux(url: str) -> str:
+    for name in _LINUX_CHROME_BINS:
+        exe = shutil.which(name)
+        if exe and _launch_browser([exe, url]):
+            return "chrome"
+    entry, launcher = _linux_default_browser_entry(), shutil.which("gtk-launch")
+    if entry and launcher and _run_opener_checked([launcher, entry, url]):
+        return "default"
+    # Graphical browsers only: a terminal one has no window to show.
+    for name in ("firefox", "brave-browser", "microsoft-edge", "x-www-browser"):
+        exe = shutil.which(name)
+        if exe and _launch_browser([exe, url]):
+            return "default"
+    return "none"
+
+
+def open_html_in_browser(path: Path) -> str:
+    """Show a checked HTML file in Google Chrome, else another web browser.
+
+    *path* comes from :func:`prepare_html_open`. Returns ``"chrome"``,
+    ``"default"`` (another browser took it) or ``"none"``. Never raises.
+    """
+    if not detect_capabilities().display_present:
+        log.info("open_html: no display present — skipping")
+        return "none"
+    url = path.as_uri()
+    plat = detect_platform()
+    if plat == "win32":
+        taken = _open_html_windows(url)
+    elif plat == "darwin":
+        taken = _open_html_macos(url)
+    else:
+        taken = _open_html_linux(url)
+    log.info("open_html: browser=%s", taken)
+    return taken
+
+
 __all__ = [
     "ChatOpenRejected",
+    "HtmlOpenRejected",
     "chat_link_path",
     "is_program_like",
     "open_file",
     "open_file_with",
+    "open_html_in_browser",
     "open_url",
     "prepare_chat_open",
+    "prepare_html_open",
     "reveal_in_folder",
 ]

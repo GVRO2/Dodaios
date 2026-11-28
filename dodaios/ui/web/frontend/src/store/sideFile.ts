@@ -18,6 +18,8 @@ export interface SideFile {
   diff: DiffFile[] | null;
   /** The line the answer pointed at (`config.py:3134`); the tab opens there. */
   line?: number;
+  /** An HTML page no web browser can show: the tab opens on its static preview. */
+  preview?: boolean;
 }
 
 interface SideFileState {

@@ -1,0 +1,171 @@
+{
+  "slug": "html-open-in-browser",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Store and expose the HTML opening preference",
+      "layer": "app",
+      "deps": [],
+      "acs": [
+        "AC-11"
+      ],
+      "dod": "Round-trip tests show the value survives a reload and an unknown value is rejected.",
+      "files_hint": [
+        "dodaios/core/config.py",
+        "dodaios/core/config_writer.py",
+        "dodaios/ui/web/settings_routes.py"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/opening-preference-setting.md",
+      "status": "done"
+    },
+    {
+      "id": "T2",
+      "title": "Check an HTML file and start a browser on it",
+      "layer": "infra",
+      "deps": [],
+      "acs": [
+        "AC-08",
+        "AC-12",
+        "AC-16"
+      ],
+      "dod": "Tests pass for the three system branches, the refusals and the no-display case.",
+      "files_hint": [
+        "dodaios/platform/open_path.py"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/html-check-and-browser-launch.md",
+      "status": "done"
+    },
+    {
+      "id": "T3",
+      "title": "Add the availability and open routes for HTML pages",
+      "layer": "ports",
+      "deps": [
+        "T2"
+      ],
+      "acs": [
+        "AC-08",
+        "AC-13",
+        "AC-14",
+        "AC-16"
+      ],
+      "dod": "Route tests prove a remote or headless client starts nothing and each reason code is returned.",
+      "files_hint": [
+        "dodaios/ui/web/agentic_ide_html_routes.py",
+        "dodaios/ui/web/server_parts/app_setup.py"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/html-open-routes.md",
+      "status": "done"
+    },
+    {
+      "id": "T4",
+      "title": "Show a static preview of HTML in the side panel",
+      "layer": "ui",
+      "deps": [],
+      "acs": [
+        "AC-13",
+        "AC-15"
+      ],
+      "dod": "Component tests show no scripts, the blocking policy, the banner and the source tab.",
+      "files_hint": [
+        "dodaios/ui/web/frontend/src/components/agentic/sidePanel/file/FileTab.tsx",
+        "dodaios/ui/web/frontend/src/components/agentic/editor/FileViewers.tsx",
+        "dodaios/ui/web/frontend/src/store/sideFile.ts",
+        "dodaios/ui/web/frontend/src/i18n/locales"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/static-preview-in-file-tab.md",
+      "status": "done"
+    },
+    {
+      "id": "T5",
+      "title": "Route an HTML link click by preference and result",
+      "layer": "ui",
+      "deps": [
+        "T1",
+        "T3",
+        "T4"
+      ],
+      "acs": [
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-10",
+        "AC-12",
+        "AC-13",
+        "AC-14",
+        "AC-16"
+      ],
+      "dod": "Unit tests cover every branch, including that rendering an answer calls nothing.",
+      "files_hint": [
+        "dodaios/ui/web/frontend/src/components/agentic/threads/openHtmlLink.ts",
+        "dodaios/ui/web/frontend/src/components/agentic/threads/openPathBeside.ts",
+        "dodaios/ui/web/frontend/src/components/agentic/threads/ThreadTimeline.tsx",
+        "dodaios/ui/web/frontend/src/i18n/locales"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/html-link-click-decision.md",
+      "status": "done"
+    },
+    {
+      "id": "T6",
+      "title": "Ask how to open HTML on the first click",
+      "layer": "ui",
+      "deps": [
+        "T5"
+      ],
+      "acs": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04"
+      ],
+      "dod": "Component tests cover both choices, dismissal and that no click means no opening.",
+      "files_hint": [
+        "dodaios/ui/web/frontend/src/components/agentic/threads/HtmlOpenDialog.tsx",
+        "dodaios/ui/web/frontend/src/components/agentic/threads/openHtmlLink.ts",
+        "dodaios/ui/web/frontend/src/i18n/locales"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/first-click-question.md",
+      "status": "done"
+    },
+    {
+      "id": "T7",
+      "title": "Add the other-view action and the Settings control",
+      "layer": "ui",
+      "deps": [
+        "T5"
+      ],
+      "acs": [
+        "AC-09",
+        "AC-11"
+      ],
+      "dod": "Tests show the preference unchanged after the secondary action and changed by Settings.",
+      "files_hint": [
+        "dodaios/ui/web/frontend/src/components/EditContextMenu.tsx",
+        "dodaios/ui/web/frontend/src/components/agentchat/FileRefChip.tsx",
+        "dodaios/ui/web/frontend/src/components/agentchat/ChatMarkdown.tsx",
+        "dodaios/ui/web/frontend/src/views",
+        "dodaios/ui/web/frontend/src/i18n/locales"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/other-view-and-settings-control.md",
+      "status": "done"
+    },
+    {
+      "id": "T8",
+      "title": "Run the acceptance checks in the Dev app",
+      "layer": "tests",
+      "deps": [
+        "T6",
+        "T7"
+      ],
+      "acs": [
+        "AC-05",
+        "AC-12"
+      ],
+      "dod": "A written result per acceptance criterion, stating what was not verified.",
+      "files_hint": [
+        "docs/features/html-open-in-browser"
+      ],
+      "file": "docs/features/html-open-in-browser/tasks/acceptance-run.md",
+      "status": "review"
+    }
+  ]
+}
